@@ -1,0 +1,20 @@
+2025-07-11 01:49:48,278 - INFO - === Pipeline START ===
+2025-07-11 01:49:48,278 - INFO - Lancement du streamer...
+2025-07-11 01:49:58,300 - ERROR - Erreur dans le pipeline
+Traceback (most recent call last):
+  File "C:\Users\ISSER TECH\Desktop\App_pred\pipeline.py", line 34, in <module>
+    run_streamer()
+  File "C:\Users\ISSER TECH\Desktop\App_pred\pipeline.py", line 19, in run_streamer
+    subprocess.run(["python", "streamer.py"], timeout=10)
+  File "C:\Program Files\Python311\Lib\subprocess.py", line 548, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\subprocess.py", line 1224, in communicate
+    sts = self.wait(timeout=self._remaining_time(endtime))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\subprocess.py", line 1260, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\subprocess.py", line 1544, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['python', 'streamer.py']' timed out after 10.0 seconds

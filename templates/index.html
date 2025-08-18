@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Prédictions des ventes</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: Arial;
+        padding: 20px;
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 { color: #333; }
+    form { margin-bottom: 20px; }
+    label { font-weight: bold; margin-right: 10px; }
+    input { padding: 5px; width: 100px; }
+    button {
+        padding: 8px 16px;
+        margin-left: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button:hover { background-color: #0056b3; }
+    #dashboard {
+        width: 90%;
+        max-width: 900px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+    }
+    #summary { margin-top: 15px; }
+    .logout-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: #dc3545;
+    }
+    .logout-btn:hover { background-color: #a71d2a; }
+</style>
+</head>
+<body>
+
+<a href="{{ url_for('logout') }}">
+    <button class="logout-btn">Se Déconnecter</button>
+</a>
+
+<h1>Prédiction des ventes LSTM</h1>
+
+<form id="forecast-form">
+    <label for="days">Nombre de jours à prévoir :</label>
+    <input type="number" id="days" name="days" min="1" max="30" value="7">
+    <button type="submit">Lancer la Prédiction</button>
+</form>
+
+<div id="dashboard">
+    <h2>Dashboard</h2>
+    <canvas id="forecastChart"></canvas>
+    <div id="summary"></div>
+    <button id="downloadCsv">Télécharger les prévisions (CSV)</button>
+</div>
+
+<script>
+const ctx = document.getElementById('forecastChart').getContext('2d');
+let forecastChart;
+
+document.getElementById('forecast-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const days = document.getElementById('days').value;
+
+    const response = await fetch('/forecast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: days })
+    });
+
+    const result = await response.json();
+    if(result.error){
+        alert(result.error);
+        return;
+    }
+
+    document.getElementById('dashboard').style.display = "flex";
+
+    // Résumé
+    const total = result.forecast_values.reduce((a,b)=>a+b,0);
+    const avg = (total/result.forecast_values.length).toFixed(2);
+    const maxValue = Math.max(...result.forecast_values);
+    const maxDate = result.forecast_dates[result.forecast_values.indexOf(maxValue)];
+    document.getElementById('summary').innerHTML = `
+        <p>Total ventes prévues: <b>${total}</b></p>
+        <p>Moyenne quotidienne: <b>${avg}</b></p>
+        <p>Pic prévu: <b>${maxValue}</b> le ${maxDate}</p>
+    `;
+
+    // Graphique
+    if(forecastChart) forecastChart.destroy();
+    forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: result.forecast_dates,
+            datasets: [{
+                label: 'Prédictions des ventes',
+                data: result.forecast_values,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0,123,255,0.2)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // Télécharger CSV
+    document.getElementById('downloadCsv').onclick = () => {
+        let csvContent = "data:text/csv;charset=utf-8,Date,Ventes\n";
+        result.forecast_dates.forEach((d,i)=>csvContent += `${d},${result.forecast_values[i]}\n`);
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "previsions_ventes.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+});
+</script>
+
+</body>
+</html>
