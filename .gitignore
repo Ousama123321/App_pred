@@ -1,3 +1,4 @@
 # Ignorer le modèle et le scaler
 lstm_sales_model.h5
 scale.save
+"create_user.py" 

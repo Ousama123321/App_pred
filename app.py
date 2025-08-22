@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
-import mysql.connector
+import psycopg2
 import numpy as np
 import joblib
 import tensorflow as tf
@@ -12,16 +12,18 @@ from functools import wraps
 import threading
 import streamer
 import os
+import gdown
 
 # Charger les variables d’environnement
 load_dotenv()
 
-# Configuration sécurisée
+# Configuration PostgreSQL sécurisée
 DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', ''),
-    'database': os.getenv('DB_NAME', 'sale')
+     'dbname': 'sale',   # ou ton nom de base
+    'user': 'postgres',     # ou ton user
+    'password': 'kahina',
+    'host': 'localhost',
+    'port': 5432      # PostgreSQL utilise "dbname" et non "database"
 }
 
 app = Flask(__name__)
@@ -32,14 +34,28 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["30 per minute"])
 limiter.init_app(app)
 
 # Charger modèle et scaler
-model = tf.keras.models.load_model("lstm_sales_model.h5")
-scaler = joblib.load("scale.save")
+MODEL_PATH = "lstm_sales_model.h5"
+SCALER_PATH = "scale.save"
+
+MODEL_URL = "https://drive.google.com/uc?id=1FqQLUSYREqVDwlnnpEkOKcoSaU4OBNjo"
+SCALER_URL = "https://drive.google.com/uc?id=1S3fwbiI5VsQqSRxbkBMLPvRY1WflK3Df"
+
+if not os.path.exists(MODEL_PATH):
+    print("Téléchargement du modèle depuis Google Drive...")
+    gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+if not os.path.exists(SCALER_PATH):
+    print("Téléchargement du scaler depuis Google Drive...")
+    gdown.download(SCALER_URL, SCALER_PATH, quiet=False)
+
+model = tf.keras.models.load_model(MODEL_PATH)
+scaler = joblib.load(SCALER_PATH)
 
 # ------------------------------
 # Helpers
 # ------------------------------
 def get_db_connection():
-    return mysql.connector.connect(**DB_CONFIG)
+    return psycopg2.connect(**DB_CONFIG)
 
 def login_required(f):
     @wraps(f)
@@ -63,15 +79,14 @@ def login():
         password = request.form.get("password")
 
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, password FROM users WHERE username=%s;", (username,))
         user = cursor.fetchone()
         conn.close()
 
-        if user and check_password_hash(user["password"], password):
-            # Stocker infos session
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
+        if user and check_password_hash(user[2], password):
+            session["user_id"] = user[0]
+            session["username"] = user[1]
 
             # Lancer le streamer en arrière-plan
             threading.Thread(target=streamer.run_streamer, daemon=True).start()
@@ -100,7 +115,7 @@ def index():
 def get_latest_sales(n_days=30):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT date, unit_sales FROM sales ORDER BY date DESC LIMIT %s", (n_days,))
+    cursor.execute("SELECT date, unit_sales FROM sales ORDER BY date DESC LIMIT %s;", (n_days,))
     results = cursor.fetchall()
     conn.close()
     results.reverse()
@@ -109,7 +124,7 @@ def get_latest_sales(n_days=30):
 def get_last_date():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT MAX(date) FROM sales")
+    cursor.execute("SELECT MAX(date) FROM sales;")
     result = cursor.fetchone()[0]
     conn.close()
     return result
@@ -118,13 +133,16 @@ def predict_next_days(n_days):
     data = get_latest_sales()
     if len(data) < 30:
         raise ValueError("Pas assez de données pour la prédiction")
+
     input_seq = scaler.transform(np.array(data).reshape(-1, 1)).reshape(1, len(data), 1)
     predictions = []
     current_input = input_seq
+
     for _ in range(n_days):
         pred = model.predict(current_input, verbose=0)[0][0]
         predictions.append(pred)
         current_input = np.append(current_input[:, 1:, :], [[[pred]]], axis=1)
+
     predictions = scaler.inverse_transform(np.array(predictions).reshape(-1, 1))
     predictions = [int(round(x[0])) for x in predictions]
     last_date = get_last_date()
@@ -144,10 +162,12 @@ def forecast():
             return jsonify({"error": "Le nombre de jours doit être entre 1 et 30"}), 400
     except:
         return jsonify({"error": "Format du paramètre 'days' invalide"}), 400
+
     try:
         forecast_dates, forecast_values = predict_next_days(days)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     return jsonify({"forecast_dates": forecast_dates, "forecast_values": forecast_values})
 
 # ------------------------------

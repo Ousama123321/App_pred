@@ -12,3 +12,4 @@ Application web de prédiction de ventes utilisant Flask et un modèle LSTM.
 1. Cloner le dépôt :  
 ```bash
 git clone https://github.com/Ousama123321/App_pred
+
