@@ -8,6 +8,7 @@ import os
 
 # Charger les variables d'environnement (.env)
 load_dotenv()
+DATABASE_URL = "postgresql://sale_jtbx_user:z1FJQ8yElmTcyVi89ILsCcHV9iT7u4xl@dpg-d2kf5ejipnbc73f26os0-a.oregon-postgres.render.com/sale_jtbx"
 
 DB_CONFIG = {
      'dbname': 'sale_jtbx',   # ou ton nom de base
@@ -19,7 +20,7 @@ DB_CONFIG = {
 
 def get_connection():
     """Créer une connexion PostgreSQL"""
-    return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(DATABASE_URL)
 
 def get_last_date():
     try:

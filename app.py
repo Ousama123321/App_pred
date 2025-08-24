@@ -18,6 +18,8 @@ import gdown
 load_dotenv()
 
 # Configuration PostgreSQL sécurisée
+DATABASE_URL = "postgresql://sale_jtbx_user:z1FJQ8yElmTcyVi89ILsCcHV9iT7u4xl@dpg-d2kf5ejipnbc73f26os0-a.oregon-postgres.render.com/sale_jtbx"
+
 DB_CONFIG = {
      'dbname': 'sale_jtbx',   # ou ton nom de base
     'user': 'sale_jtbx_user',     # ou ton user
@@ -55,7 +57,7 @@ scaler = joblib.load(SCALER_PATH)
 # Helpers
 # ------------------------------
 def get_db_connection():
-    return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(DATABASE_URL)
 
 def login_required(f):
     @wraps(f)
