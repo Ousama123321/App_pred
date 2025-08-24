@@ -10,10 +10,10 @@ import os
 load_dotenv()
 
 DB_CONFIG = {
-     'dbname': 'sale',   # ou ton nom de base
-    'user': 'postgres',     # ou ton user
-    'password': 'kahina',
-    'host': 'localhost',
+     'dbname': 'sale_jtbx',   # ou ton nom de base
+    'user': 'sale_jtbx_user',     # ou ton user
+    'password': 'z1FJQ8yElmTcyVi89ILsCcHV9iT7u4xl',
+    'host': 'dpg-d2kf5ejipnbc73f26os0-a.frankfurt-postgres.render.com',
     'port': 5432  # PostgreSQL utilise "dbname"
 }
 
