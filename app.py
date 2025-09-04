@@ -18,13 +18,13 @@ import gdown
 load_dotenv()
 
 # Configuration PostgreSQL sécurisée
-DATABASE_URL = "postgresql://sale_jtbx_user:z1FJQ8yElmTcyVi89ILsCcHV9iT7u4xl@dpg-d2kf5ejipnbc73f26os0-a.oregon-postgres.render.com/sale_jtbx"
+DATABASE_URL = "postgresql://sales_4pvm_user:ipdMkrVqQugaI1fvWTmgusk1eAWF6bfq@dpg-d2sun98dl3ps73ft2rng-a.oregon-postgres.render.com/sales_4pvm"
 
 DB_CONFIG = {
-     'dbname': 'sale_jtbx',   # ou ton nom de base
-    'user': 'sale_jtbx_user',     # ou ton user
-    'password': 'z1FJQ8yElmTcyVi89ILsCcHV9iT7u4xl',
-    'host': 'dpg-d2kf5ejipnbc73f26os0-a.frankfurt-postgres.render.com',
+     'dbname': 'sales_4pvm',   # ou ton nom de base
+    'user': 'sales_4pvm_user',     # ou ton user
+    'password': 'ipdMkrVqQugaI1fvWTmgusk1eAWF6bfq',
+    'host': 'dpg-d2sun98dl3ps73ft2rng-a.frankfurt-postgres.render.com',
     'port': 5432      # PostgreSQL utilise "dbname" et non "database"
 }
 
