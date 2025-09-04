@@ -1,4 +1,4 @@
-# Image de base avec Python 3.11 (compatible avec tes libs)
+# Image de base avec Python 3.11 (compatible avec libs)
 FROM python:3.11-slim
 
 # Installer dépendances système
